@@ -671,10 +671,21 @@ async function loadGltfCat(group) {
     bAL: find(/^j_l_ankle/i), bAR: find(/^j_r_ankle/i),
   };
 
-  // ---- หันหน้าให้ตรง +Z อัตโนมัติ (ดูจากตำแหน่งหัวเทียบโคนหาง) ----
-  if (B.head && B.tail.length) {
+  // ---- เลือกท่าตั้งต้น: bind pose หรือท่าเดิมในไฟล์ — เอาอันที่ "หัว-หาง อยู่แนวนอน" (ท่ายืนสี่ขา) ----
+  // (Toon Cat มี bind pose เป็นท่ายืนตัวตรง ส่วนแมวดำมีท่าในไฟล์เป็นท่านั่ง → ต้องเลือกคนละแบบ)
+  const headTail = () => {
+    model.updateMatrixWorld(true);
     const h = B.head.getWorldPosition(new THREE.Vector3()), t = B.tail[0].getWorldPosition(new THREE.Vector3());
-    model.rotation.y += -Math.atan2(h.x - t.x, h.z - t.z);
+    const d = h.sub(t); return { d, flat: Math.hypot(d.x, d.z) / (d.length() || 1) };
+  };
+  if (B.head && B.tail.length) {
+    const bind = headTail();
+    for (const [b, o] of orig) { b.quaternion.copy(o.q); b.position.copy(o.p); }
+    const original = headTail();
+    if (bind.flat >= original.flat) model.traverse(o => { if (o.isSkinnedMesh && o.skeleton) o.skeleton.pose(); });
+    const use = bind.flat >= original.flat ? bind : original;
+    // ---- หันหน้าให้ตรง +Z (หัวไปทางหน้า) ----
+    model.rotation.y += -Math.atan2(use.d.x, use.d.z);
     model.updateMatrixWorld(true);
   }
   // ---- ขนาด + วางเท้าบนพื้น ----
