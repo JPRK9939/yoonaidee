@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>แผนที่สำรวจ — อยู่ไหนดี</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body class="app">
+<div id="map"></div>
+
+<header class="topbar">
+  <div class="brand glass">
+    <a class="logo" href="index.html"><div class="logo-mark">⌂</div><span class="txt">อยู่ไหนดี</span></a>
+    <select class="region-sel" id="region"></select>
+  </div>
+  <label class="search glass">🔎 <input id="q" placeholder="ค้นหาชื่อที่พัก / เขต / สถานี"></label>
+  <div class="tools glass">
+    <div class="seg" id="dim"><button data-v="2d">2D</button><button data-v="3d">3D</button></div>
+    <div class="seg desk" id="styles"></div>
+    <select class="region-sel" id="styles-m" style="display:none"></select>
+    <a class="btn sm" id="cmp-btn" href="compare.html" target="_blank">⚖️ <span class="desk">เปรียบเทียบ</span> <span class="compare-count" id="cmp-n">0</span></a>
+    <button class="btn sm" id="set-btn" title="ตั้งค่า">⚙️</button>
+  </div>
+</header>
+
+<aside class="side glass" id="side">
+  <div class="grip" id="grip"></div>
+  <div class="tabs" id="tabs">
+    <button data-t="list" class="on">🏢 ที่พัก</button>
+    <button data-t="layers">🗺️ เลเยอร์</button>
+    <button data-t="work">📍 ที่ทำงาน</button>
+  </div>
+  <div class="pane" id="pane-list">
+    <div class="row" style="justify-content:space-between">
+      <div class="seg" id="mode"><button data-v="rent" class="on">เช่า</button><button data-v="buy">ซื้อ</button></div>
+      <span class="badge-live" id="live-badge">LIVE</span>
+    </div>
+    <div class="row" id="types"></div>
+    <div class="row"><label style="flex:1">งบสูงสุด: <b id="maxp-v"></b></label></div>
+    <input type="range" id="maxp">
+    <div class="row">
+      <select class="field" id="sort" style="flex:1">
+        <option value="score">เรียงตามคะแนนรวม</option><option value="asc">ราคาต่ำ → สูง</option><option value="desc">ราคาสูง → ต่ำ</option>
+        <option value="transit">ใกล้รถไฟฟ้าที่สุด</option><option value="flood">ปลอดภัยน้ำท่วมที่สุด</option><option value="commute">เดินทางไปที่ทำงานเร็วสุด</option>
+      </select>
+    </div>
+    <div class="small" id="count"></div>
+    <button class="btn sm" id="add-place" style="width:100%;justify-content:center;margin:6px 0">＋ ไม่เจอที่พักของคุณ? เพิ่มเองบนแผนที่</button>
+    <div class="list" id="list"></div>
+  </div>
+  <div class="pane hidden" id="pane-layers">
+    <div class="layer-box">
+      <label class="check"><input type="checkbox" id="ly-listings" checked> 🏢 ที่พักทั้งหมด</label>
+      <label class="check"><input type="checkbox" id="ly-transit" checked> 🚇 รถไฟฟ้า BTS / MRT / ARL</label>
+      <label class="check"><input type="checkbox" id="ly-bld"> 🏙️ อาคาร 3D (OpenStreetMap)</label>
+    </div>
+    <div class="layer-box">
+      <label class="check"><input type="checkbox" id="ly-density"> 👥 ความหนาแน่นประชากร</label>
+      <label class="check"><input type="checkbox" id="ly-shops"> 🏪 ร้านค้า & 7-Eleven (รอบที่พักที่เลือก)</label>
+      <label class="check" style="padding-left:30px"><input type="checkbox" id="ly-conv-only"> แสดงเฉพาะร้านสะดวกซื้อ / 7-Eleven</label>
+      <div class="sub small" id="shops-note">เลือกที่พักเพื่อดูร้านในรัศมี 800 ม. หรือซูมเข้าเพื่อดูร้านทั้งหมดบนจอ</div>
+    </div>
+    <div class="layer-box">
+      <label class="check"><input type="checkbox" id="ly-elev"> ⛰️ ความสูง-ต่ำของพื้นที่</label>
+      <label class="check"><input type="checkbox" id="ly-flood"> 🌊 จำลองน้ำท่วม / น้ำขัง</label>
+      <div class="sub hidden" id="flood-ctl">
+        <div class="row"><label style="flex:1">ระดับน้ำ (ม. รทก.): <b id="lv-v">0.0</b></label><button class="btn sm" id="flood-play">▶ เล่น</button></div>
+        <input type="range" id="lv" min="0" max="3" step="0.05" value="0">
+        <div class="row"><label>ฝนตกสะสม: <b id="rain-v">0</b> มม.</label></div>
+        <input type="range" id="rain" min="0" max="300" step="10" value="0">
+        <div class="small">เขตที่ระดับพื้นต่ำจะท่วมก่อน — กด ▶ เพื่อดูลำดับ</div>
+        <h4>ลำดับเขตที่น้ำท่วมถึง</h4>
+        <div id="flood-order" class="small" style="max-height:180px;overflow:auto"></div>
+      </div>
+    </div>
+    <div class="layer-box">
+      <label class="check"><input type="checkbox" id="ly-traffic"> 🚦 สภาพจราจร</label>
+      <div class="sub hidden" id="traffic-ctl">
+        <div class="row"><label style="flex:1">เวลา: <b id="hr-v"></b></label><button class="btn sm" id="hr-now">ตอนนี้</button></div>
+        <input type="range" id="hr" min="0" max="23.5" step="0.5">
+        <label class="check"><input type="checkbox" id="weekend"> วันหยุดสุดสัปดาห์</label>
+      </div>
+    </div>
+    <p class="small">⚠️ ราคาและประกาศเป็น<b>ข้อมูลจำลอง</b>ที่อัปเดตแบบเรียลไทม์ (ต่อ API จริงได้ที่ <code>DataProvider</code> ใน js/data.js) · ความสูงพื้นที่เป็นแบบจำลองโดยประมาณ · ร้านค้า/อาคาร/เส้นทาง ใช้ข้อมูลจริงจาก OpenStreetMap / OSRM</p>
+  </div>
+  <div class="pane hidden" id="pane-work">
+    <h4>🔎 ค้นหาสถานที่ทำงาน</h4>
+    <div class="row" style="flex-wrap:nowrap">
+      <input class="field" id="wp-q" placeholder="เช่น เซ็นทรัลเวิลด์, ตึก CP, ม.เกษตร, สถานีอโศก" style="flex:1">
+      <button class="btn primary" id="wp-go">ค้นหา</button>
+    </div>
+    <div class="list" id="wp-results" style="margin:6px 0 4px"></div>
+    <div class="small" style="margin-bottom:10px">หรือ</div>
+    <button class="btn" id="add-wp" style="width:100%;justify-content:center">＋ ปักหมุดที่ทำงาน (คลิกบนแผนที่)</button>
+    <h4 style="margin-top:14px">เพิ่มเร็ว</h4>
+    <div class="row" id="wp-presets"></div>
+    <h4>หมุดของฉัน</h4>
+    <div class="list" id="wp-list"></div>
+    <div class="small" style="margin-top:10px">เลือกที่พักแล้วระบบจะลากเส้นเส้นทางไปทุกหมุด พร้อมเวลาเดินทางช่วงรถติดและตอนน้ำท่วม</div>
+  </div>
+</aside>
+
+<section class="detail glass hidden" id="detail"></section>
+<div class="legend glass" id="legend"></div>
+<div class="live-strip glass" id="live-strip"><span class="badge-live">ราคาสด</span><span id="ticker" class="small">กำลังเชื่อมต่อ…</span></div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

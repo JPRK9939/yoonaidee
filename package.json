@@ -1,0 +1,17 @@
+{
+  "name": "webtheconofind",
+  "version": "1.0.0",
+  "description": "``` node server.js ``` แล้วเปิด http://localhost:5173 (ไม่ต้อง npm install — ไลบรารีโหลดจาก CDN)",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@duckdb/node-api": "^2.0.1-r.1"
+  }
+}

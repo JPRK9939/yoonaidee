@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>อยู่ไหนดี — สำรวจที่พักกรุงเทพฯ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+</head>
+<body class="home">
+<canvas id="home-canvas"></canvas>
+<div class="home-ui">
+  <nav class="home-nav">
+    <a class="logo" href="index.html"><div class="logo-mark">⌂</div><span>อยู่ไหนดี</span></a>
+    <div style="display:flex;gap:8px">
+      <a class="btn" href="compare.html" target="_blank">เปรียบเทียบ</a>
+      <a class="btn primary" href="app.html">เปิดแผนที่</a>
+    </div>
+  </nav>
+  <section class="hero">
+    <div class="eyebrow">🏙️ กรุงเทพฯ & ปริมณฑล · เปิดให้ใช้แล้ว</div>
+    <h1>หาที่อยู่ที่ <span>ใช่</span><br>ก่อนเซ็นสัญญา</h1>
+    <p>สำรวจคอนโด หอพัก อพาร์ตเมนต์ และบ้าน ทุกจุดบนแผนที่ 3D — ดูราคาเช่า/ขายแบบอัปเดตสด ความหนาแน่น ร้านสะดวกซื้อ ความเสี่ยงน้ำท่วม รถติด และเวลาเดินทางไปที่ทำงานของคุณ</p>
+    <div class="cta">
+      <a class="btn primary" href="app.html">เริ่มสำรวจ →</a>
+      <a class="btn" href="app.html?flood=1">จำลองน้ำท่วม</a>
+    </div>
+  </section>
+  <div class="feat">
+    <div><b>💸 ราคาสด</b>ค่าเช่าตลาด · ราคาปล่อยเช่า · ราคาขาย</div>
+    <div><b>🌊 จำลองน้ำท่วม</b>เขตไหนท่วมก่อน-หลัง ลึกแค่ไหน</div>
+    <div><b>🚇 เดินทาง</b>ปักหมุดที่ทำงานหลายจุด ดูเส้นทาง</div>
+    <div><b>🏪 รอบที่พัก</b>ร้านค้า · 7-Eleven · ความหนาแน่น</div>
+    <div><b>🐈 เดินสำรวจ</b>ลงไปเดินในพื้นที่จริงแบบแมว</div>
+  </div>
+  <div class="home-settings"><div class="seg" id="q-seg"><button data-q="low">ประหยัด</button><button data-q="medium">ปกติ</button><button data-q="high">สวย</button></div></div>
+  <div id="labels"></div>
+</div>
+<script type="module" src="js/home.js"></script>
+</body>
+</html>

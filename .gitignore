@@ -1,0 +1,6 @@
+.env
+data/google-cache/
+node_modules/
+# ข้อมูลส่วนตัว / ไฟล์ที่ไม่เผยแพร่ (ใช้ได้ในเครื่องเท่านั้น)
+*.local.json
+*.local.glb
