@@ -766,6 +766,12 @@ async function loadGltfCat(group) {
     const n = pool[Math.floor(Math.random() * pool.length)]; hist.push(n); if (hist.length > histMax) hist.shift(); start(n);
   };
 
+  // ความเร็วเล่นคลิปเดินในไฟล์: ปรับตามความเร็วจริง ÷ ขนาดตัว (ไม่ให้ขาวิ่งรัวเกินจริง)
+  // เดิน 10 ม./วิ (แมว 8 ม.) ≈ 1.0 เท่า · วิ่ง ≈ 1.6 เท่า (สูงสุด 1.8)
+  const clipRate = st => st.run && st.speed > CAT_LENGTH * 1.6
+    ? Math.min(1.8, Math.max(1.1, st.speed / (CAT_LENGTH * 2.3)))
+    : Math.min(1.2, Math.max(0.5, st.speed / (CAT_LENGTH * 1.25)));
+
   return {
     url,
     jump() {},
@@ -781,7 +787,7 @@ async function loadGltfCat(group) {
       // น้ำหนักคลิป
       let clipSum = 0;
       idleActs.forEach((a, i) => { const on = cur === 'clip' + i || cur === 'clipB' + i; clipW[i] += ((on ? 1 : 0) - clipW[i]) * Math.min(1, dt * 4); if (clipW[i] < 0.01 && !on) a.paused = true; a.setEffectiveWeight(clipW[i]); clipSum += clipW[i]; });
-      if (walkAct) { walkAct.setEffectiveWeight(mv * (1 - clipSum)); walkAct.timeScale = st.run ? Math.max(1.2, st.speed / 4) : Math.max(0.7, st.speed / 2.2); }
+      if (walkAct) { walkAct.setEffectiveWeight(mv * (1 - clipSum)); walkAct.timeScale = clipRate(st); }
       for (const b of bones) { const r = rest.get(b); b.quaternion.copy(r.q); b.position.copy(r.p); b.scale.copy(r.s); }
       mixer.update(dt);
       if (clipSum > 0.001) for (const b of fixBones) { const o = orig.get(b); b.quaternion.slerp(o.q, clipSum); b.position.lerp(o.p, clipSum); }
@@ -792,8 +798,9 @@ async function loadGltfCat(group) {
       for (const key in T) P[key] += (T[key] - P[key]) * k;
 
       // ---- เดิน/วิ่ง ด้วยโค้ด ----
-      const run = st.run && st.speed > 4;
-      phase += dt * (run ? 13 : 7.5) * Math.max(0.6, Math.min(1.4, st.speed / (run ? 8 : 2.4)));
+      const run = st.run && st.speed > CAT_LENGTH * 1.6;
+      // จังหวะก้าวตามขนาดตัว: แมวตัวใหญ่ก้าวยาว → ขยับขาช้าลง (1 รอบก้าว ≈ 0.9 เท่าความยาวตัว, วิ่ง ≈ 1.6 เท่า)
+      phase += dt * 2 * Math.PI * Math.max(0.3, st.speed) / (CAT_LENGTH * (run ? 1.6 : 0.9));
       const A = run ? 0.75 : 0.45;
       // walk: ขาทแยงเคลื่อนพร้อมกัน / run: ขาหน้าคู่-ขาหลังคู่ (gallop)
       const ph = run ? [0, 0.35, Math.PI, Math.PI + 0.35] : [0, Math.PI, Math.PI * 1.5, Math.PI * 0.5]; // fL, fR, bL, bR
